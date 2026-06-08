@@ -121,7 +121,7 @@ async function getSectorData(item) {
       changePercent,
     };
   } catch (err) {
-    // console.error(`Failed ${item.symbol}:`, err.message);
+    console.error(`Failed ${item.symbol}:`, err.message);
     return null;
   }
 }
