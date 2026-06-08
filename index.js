@@ -46,7 +46,7 @@ async function refreshData() {
 }
 
 // Run immediately
-// refreshData();
+refreshData();
 
 // Refresh every 20 seconds
 setInterval(refreshData, 1000 * 20);
