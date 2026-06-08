@@ -205,7 +205,7 @@ exports.main = async()=>{
 
   });
 
-  // console.table(finalData);
+  console.table(finalData);
 
   // latestData = finalData;
 
