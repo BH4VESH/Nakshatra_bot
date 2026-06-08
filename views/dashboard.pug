@@ -1,0 +1,140 @@
+doctype html
+html
+  head
+    title Trading Dashboard
+
+    style.
+      body {
+        font-family: Arial;
+        padding: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th {
+        background: #222;
+        color: white;
+      }
+
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+
+      .bullish {
+        background: #d4edda;
+      }
+
+      .bearish {
+        background: #f8d7da;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+     .logout-btn {
+        background: #dc2626;
+        color: white;
+        text-decoration: none;
+        padding: 1px 20px 1px 20px;
+        border-radius: 6px;
+        margin-left: 15px;
+      }
+
+      .logout-btn:hover {
+        background: #b91c1c;
+      }
+
+  body
+
+  .header
+  .left
+    h2 Trading Dashboard
+
+  .right
+    span Welcome #{username}
+    a.logout-btn(href="/logout") Logout
+
+    table#dashboard
+      thead
+        tr
+          th Rank
+          th Sector
+          th Live
+          th Open
+          th G90
+          th G180
+          th G270
+          th G360
+          th Position
+          th Strength
+          th Target
+          th Direction
+          th Nakshatra
+          th Astro Score
+          th Combined Score
+          th Signal
+
+      tbody
+
+    script.
+      async function loadData() {
+
+        const response =
+          await fetch('/api/dashboard');
+
+        const data =
+          await response.json();
+
+        const tbody =
+          document.querySelector(
+            '#dashboard tbody'
+          );
+
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+
+          const tr =
+            document.createElement('tr');
+
+          tr.className =
+            row.Direction === 'Bullish'
+              ? 'bullish'
+              : 'bearish';
+
+          tr.innerHTML = `
+            <td>${row.Rank}</td>
+            <td>${row.Sector}</td>
+            <td>${row.LivePrice}</td>
+            <td>${row.DailyOpen}</td>
+            <td>${row.Gann90}</td>
+            <td>${row.Gann180}</td>
+            <td>${row.Gann270}</td>
+            <td>${row.Gann360}</td>
+            <td>${row.Position}</td>
+            <td>${row.Strength}</td>
+            <td>${row.Target}</td>
+            <td>${row.Direction}</td>
+            <td>${row.NakshatraBias}</td>
+            <td>${row.AstroScore}</td>
+            <td>${row.CombinedScore}</td>
+            <td>${row.Signal}</td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      loadData();
+
+      setInterval(
+        loadData,
+        20000
+      );
