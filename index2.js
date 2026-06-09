@@ -4,11 +4,9 @@ const SunCalc = require("suncalc");
 const sweph = require("sweph");
 let latestData = [];
 
-
 const yahooFinance = new YahooFinance({
   suppressNotices: ["yahooSurvey"],
 });
-
 
 const sectors = [
   { sector: "NIFTY 50", symbol: "^NSEI" },
@@ -52,10 +50,15 @@ function getGannLevels(price) {
   const root = Math.sqrt(price);
 
   return {
-    gann90: Number(Math.pow(root + 0.25, 2).toFixed(2)),
-    gann180: Number(Math.pow(root + 0.5, 2).toFixed(2)),
-    gann270: Number(Math.pow(root + 0.75, 2).toFixed(2)),
-    gann360: Number(Math.pow(root + 1.0, 2).toFixed(2)),
+    gannM360: Math.pow(root - 1.0, 2),
+    gannM270: Math.pow(root - 0.75, 2),
+    gannM180: Math.pow(root - 0.5, 2),
+    gannM90: Math.pow(root - 0.25, 2),
+
+    gann90: Math.pow(root + 0.25, 2),
+    gann180: Math.pow(root + 0.5, 2),
+    gann270: Math.pow(root + 0.75, 2),
+    gann360: Math.pow(root + 1.0, 2),
   };
 }
 
@@ -72,8 +75,8 @@ async function getSectorData(item) {
 
     const gann = getGannLevels(dailyOpen);
 
-    let position = "Below G90";
-    let strength = "Bearish";
+    let position = "";
+    let strength = "";
 
     if (livePrice > gann.gann360) {
       position = "Above G360";
@@ -87,6 +90,21 @@ async function getSectorData(item) {
     } else if (livePrice > gann.gann90) {
       position = "Above G90";
       strength = "MILD BULLISH";
+    } else if (livePrice < gann.gannM360) {
+      position = "Below M360";
+      strength = "EXTREMELY BEARISH";
+    } else if (livePrice < gann.gannM270) {
+      position = "Below M270";
+      strength = "STRONG BEARISH";
+    } else if (livePrice < gann.gannM180) {
+      position = "Below M180";
+      strength = "BEARISH";
+    } else if (livePrice < gann.gannM90) {
+      position = "Below M90";
+      strength = "MILD BEARISH";
+    } else {
+      position = "Between M90 & G90";
+      strength = "NEUTRAL";
     }
 
     const direction = livePrice > dailyOpen ? "Bullish" : "Bearish";
@@ -115,6 +133,11 @@ async function getSectorData(item) {
       gann270: gann.gann270,
       gann360: gann.gann360,
 
+      gannM90: gann.gannM90,
+      gannM180: gann.gannM180,
+      gannM270: gann.gannM270,
+      gannM360: gann.gannM360,
+
       strength,
       position,
       direction,
@@ -126,7 +149,7 @@ async function getSectorData(item) {
   }
 }
 
-exports.main = async()=>{
+exports.main = async () => {
   // console.log("\nFetching market data...\n");
 
   const results = (await Promise.all(sectors.map(getSectorData))).filter(
@@ -141,12 +164,38 @@ exports.main = async()=>{
   const finalData = results.map((row, index) => {
     let technicalScore = 0;
 
-    if (row.direction === "Bullish") {
-      technicalScore += 40;
-    }
+    switch (row.position) {
+      case "Above G360":
+        technicalScore += 60;
+        break;
 
-    if (row.position.startsWith("Above")) {
-      technicalScore += 30;
+      case "Above G270":
+        technicalScore += 45;
+        break;
+
+      case "Above G180":
+        technicalScore += 30;
+        break;
+
+      case "Above G90":
+        technicalScore += 15;
+        break;
+
+      case "Below M90":
+        technicalScore -= 15;
+        break;
+
+      case "Below M180":
+        technicalScore -= 30;
+        break;
+
+      case "Below M270":
+        technicalScore -= 45;
+        break;
+
+      case "Below M360":
+        technicalScore -= 60;
+        break;
     }
 
     const target =
@@ -158,7 +207,16 @@ exports.main = async()=>{
             ? row.gann270.toFixed(2)
             : row.position === "Above G90"
               ? row.gann180.toFixed(2)
-              : row.gann90.toFixed(2);
+              : // Negative side
+                row.position === "Below M360"
+                ? "Breakdown Zone"
+                : row.position === "Below M270"
+                  ? row.gannM360.toFixed(2)
+                  : row.position === "Below M180"
+                    ? row.gannM270.toFixed(2)
+                    : row.position === "Below M90"
+                      ? row.gannM180.toFixed(2)
+                      : row.gann90.toFixed(2);
 
     const combinedScore = technicalScore + astro.astroScore;
 
@@ -183,10 +241,22 @@ exports.main = async()=>{
       Sector: row.sector,
       LivePrice: row.livePrice.toFixed(2),
       DailyOpen: row.dailyOpen.toFixed(2),
-      Gann90: row.gann90.toFixed(2),
-      Gann180: row.gann180.toFixed(2),
-      Gann270: row.gann270.toFixed(2),
-      Gann360: row.gann360.toFixed(2),
+      Gann90:
+        row.position === "Above G90"
+          ? row.gann90.toFixed(2)
+          : row.gannM90.toFixed(2),
+      Gann180:
+        row.position === "Above G90"
+          ? row.gann180.toFixed(2)
+          : row.gannM180.toFixed(2),
+      Gann270:
+        row.position === "Above G90"
+          ? row.gann270.toFixed(2)
+          : row.gannM270.toFixed(2),
+      Gann360:
+        row.position === "Above G90"
+          ? row.gann360.toFixed(2)
+          : row.gannM360.toFixed(2),
       Target: target,
       Position: row.position,
       Strength: row.strength,
@@ -196,19 +266,14 @@ exports.main = async()=>{
       AstroScore: astro.astroScore,
       CombinedScore: combinedScore,
       Signal: signal,
-      Action: trader.action,
+      // Action: trader.action,
       // rahuKaal: astro2.rahuKaal,
     };
-
-
-
-
   });
 
-  console.table(finalData);
+  // console.table(finalData);
 
   // latestData = finalData;
-
 
   return finalData;
 
@@ -229,7 +294,7 @@ exports.main = async()=>{
 
   //   console.log("\nRaw Data");
   //   console.log(JSON.stringify(finalData, null, 2));
-}
+};
 
 async function getNakshatraData() {
   try {
@@ -369,26 +434,68 @@ async function getNakshatraData() {
   }
 }
 
+// function getSignal({ direction, position, astroScore, changePercent }) {
+//   if (position === "Above G360") {
+//     return "CALL BUY";
+//   }
+
+//   if (position === "Above G270") {
+//     return "CALL BUY";
+//   }
+
+//   if (position === "Below M360") {
+//     return "PUT BUY";
+//   }
+
+//   if (position === "Below M270") {
+//     return "PUT BUY";
+//   }
+
+//   if (position === "Between M90 & G90") {
+//     return "NO TRADE";
+//   }
+
+//   return "WAIT";
+// }
+
 function getSignal({ direction, position, astroScore, changePercent }) {
-  if (
-    direction === "Bullish" &&
-    position.startsWith("Above") &&
-    astroScore > 0 &&
-    changePercent > 0
-  ) {
+  // SUPER BULLISH
+  if (position === "Above G360" && astroScore >= 20 && changePercent > 1) {
+    return "AGGRESSIVE BUY";
+  }
+
+  if (position === "Above G270" && astroScore > 0 && changePercent > 0) {
     return "STRONG BUY";
   }
 
-  if (direction === "Bullish" && position.startsWith("Above")) {
+  if (position === "Above G180" && direction === "Bullish") {
     return "BUY";
   }
 
-  if (direction === "Bullish") {
-    return "HOLD";
+  if (position === "Above G90" && direction === "Bullish") {
+    return "MILD BUY";
   }
 
-  if (direction === "Bearish" && changePercent < -1) {
+  // SUPER BEARISH
+  if (position === "Below M360" && astroScore <= -20 && changePercent < -1) {
+    return "AGGRESSIVE SELL";
+  }
+
+  if (position === "Below M270" && changePercent < 0) {
+    return "STRONG SELL";
+  }
+
+  if (position === "Below M180" && direction === "Bearish") {
     return "SELL";
+  }
+
+  if (position === "Below M90" && direction === "Bearish") {
+    return "MILD SELL";
+  }
+
+  // SIDEWAYS
+  if (position === "Between M90 & G90") {
+    return "WAIT";
   }
 
   return "WATCH";
