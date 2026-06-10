@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const { main } = require("./index2");
@@ -15,17 +16,18 @@ app.use(
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
     },
-  })
+  }),
 );
 
 let latestData = [];
 
-loginDataAllow = [
-  {
-    username: "bhavesh",
-    password: "bhavesh@narola",
-  },
-];
+const usernames = process.env.USERNAMES.split(",");
+const passwords = process.env.PASSWORDS.split(",");
+
+const loginDataAllow = usernames.map((username, index) => ({
+  username,
+  password: passwords[index],
+}));
 
 // Pug setup
 app.set("view engine", "pug");
@@ -61,9 +63,7 @@ app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
   const user = loginDataAllow.find(
-    (u) =>
-      u.username === username &&
-      u.password === password
+    (u) => u.username === username && u.password === password,
   );
 
   if (!user) {
@@ -104,7 +104,6 @@ app.get("/api/dashboard", checkAuth, (req, res) => {
 app.listen(7000, () => {
   console.log("Dashboard running at http://localhost:7000");
 });
-
 
 function checkAuth(req, res, next) {
   if (req.session.loggedIn) {
