@@ -1,5 +1,4 @@
 const express = require("express");
-require("dotenv").config();
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const { main } = require("./index2");
@@ -21,13 +20,20 @@ app.use(
 
 let latestData = [];
 
-const usernames = process.env.USERNAMES.split(",");
-const passwords = process.env.PASSWORDS.split(",");
-
-const loginDataAllow = usernames.map((username, index) => ({
-  username,
-  password: passwords[index],
-}));
+loginDataAllow = [
+  {
+    username: "bhavesh",
+    password: "bhavesh@narola",
+  },
+  {
+    username: "ravivalva007@gmail.com",
+    password: "valva@007",
+  },
+  {
+    username: "veenschinese@gmail.com",
+    password: "canis@system",
+  },
+];
 
 // Pug setup
 app.set("view engine", "pug");
