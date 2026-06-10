@@ -241,22 +241,19 @@ exports.main = async () => {
       Sector: row.sector,
       LivePrice: row.livePrice.toFixed(2),
       DailyOpen: row.dailyOpen.toFixed(2),
-      Gann90:
-        row.position === "Above G90"
-          ? row.gann90.toFixed(2)
-          : row.gannM90.toFixed(2),
-      Gann180:
-        row.position === "Above G90"
-          ? row.gann180.toFixed(2)
-          : row.gannM180.toFixed(2),
-      Gann270:
-        row.position === "Above G90"
-          ? row.gann270.toFixed(2)
-          : row.gannM270.toFixed(2),
-      Gann360:
-        row.position === "Above G90"
-          ? row.gann360.toFixed(2)
-          : row.gannM360.toFixed(2),
+      Gann90: row.position.startsWith("Above")
+        ? row.gann90.toFixed(2)
+        : row.gannM90.toFixed(2),
+
+      Gann180: row.position.startsWith("Above")
+        ? row.gann180.toFixed(2)
+        : row.gannM180.toFixed(2),
+      Gann270: row.position.startsWith("Above")
+        ? row.gann270.toFixed(2)
+        : row.gannM270.toFixed(2),
+      Gann360: row.position.startsWith("Above")
+        ? row.gann360.toFixed(2)
+        : row.gannM360.toFixed(2),
       Target: target,
       Position: row.position,
       Strength: row.strength,
