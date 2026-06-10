@@ -709,3 +709,10 @@ async function getAstroTradingDataKal(
 // setInterval(async () => {
 //   await main().catch(console.error);
 // }, 1000 * 20);
+setInterval(async () => {
+  try {
+    const res = await axios.get("https://nifty-trade.onrender.com");
+  } catch (err) {
+    console.error("Error:", err.message);
+  }
+}, 6000);
